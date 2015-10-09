@@ -128,13 +128,14 @@ public class MysqlEventProducer<T extends GenericRecord> extends AbstractEventPr
 			}
 			schemaChangeEventProcessor.setSchemaRegistryService(schemaRegistryService);
 			schemaChangeEventProcessor.setTableUriToSrcNameMap(tableUriToSrcNameMap);
+			schemaChangeEventProcessor.init();
 
 			/** updating schemas for registered logical sources */
-			for (LogicalSourceStaticConfig sourceConfig : physicalSourceStaticConfig.getSources())
+			/*for (LogicalSourceStaticConfig sourceConfig : physicalSourceStaticConfig.getSources())
 			{
 				String[] parts = sourceConfig.getUri().split("\\.");
 				schemaChangeEventProcessor.process(parts[0], parts[1]);
-			}
+			}*/
 
 			mysqlTxnManager =
 			        new MysqlTransactionManagerImpl<T>(eventBuffer, maxScnReaderWriter, dbusEventsStatisticsCollector,
@@ -161,7 +162,8 @@ public class MysqlEventProducer<T extends GenericRecord> extends AbstractEventPr
 		}
 		catch (Exception e)
 		{
-			LOGGER.error("Error occurred while starting open replication.." + e);
+			LOGGER.error("Error occurred while starting open replication.." + e );
+			e.printStackTrace();
 			return;
 		}
 		LOGGER.info("Open Replicator has been started successfully for the file " + binlogFile);

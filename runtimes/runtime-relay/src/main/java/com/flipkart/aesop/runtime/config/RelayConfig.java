@@ -49,7 +49,7 @@ public class RelayConfig implements InitializingBean {
 	private Properties relayProperties = new Properties();
 
 	/** The schemas registry location */
-	private String schemaRegistryLocation;
+	private String schemaRegistryURL;
 
 	/** The Memory mapped event buffer directory location */
 	private String mmappedDirectoryLocation;
@@ -64,7 +64,7 @@ public class RelayConfig implements InitializingBean {
 	 * @see org.springframework.beans.factory.InitializingBean#afterPropertiesSet()
 	 */
 	public void afterPropertiesSet() throws Exception {
-		Assert.notNull(this.schemaRegistryLocation,
+		Assert.notNull(this.schemaRegistryURL,
 				"'schemaRegistryLocation' cannot be null. This Relay will not be initialized");
 		Assert.notNull(this.mmappedDirectoryLocation,
 				"'mmappedDirectoryLocation' cannot be null. This Relay will not be initialized");
@@ -86,17 +86,11 @@ public class RelayConfig implements InitializingBean {
 	public void setRelayProperties(Properties relayProperties) {
 		this.relayProperties = relayProperties;
 	}
-	public String getSchemaRegistryLocation() {
-		return schemaRegistryLocation;
+	public String getSchemaRegistryURL() {
+		return schemaRegistryURL;
 	}
-	public void setSchemaRegistryLocation(String schemaRegistryLocation) {
-		File[] foundFiles = FileLocator.findDirectories(schemaRegistryLocation,
-				null);
-		if (foundFiles.length > 0) {
-			this.schemaRegistryLocation = foundFiles[0].getAbsolutePath();
-		} else {
-			this.schemaRegistryLocation = schemaRegistryLocation;
-		}
+	public void setSchemaRegistryURL(String schemaRegistryUrl) {
+		this.schemaRegistryURL = schemaRegistryUrl;
 	}
 	public String getMmappedDirectoryLocation() {
 		return mmappedDirectoryLocation;

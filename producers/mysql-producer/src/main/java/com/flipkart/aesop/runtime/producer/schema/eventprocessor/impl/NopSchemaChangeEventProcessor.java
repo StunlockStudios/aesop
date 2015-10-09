@@ -10,6 +10,7 @@ import org.trpr.platform.core.spi.logging.Logger;
 import com.flipkart.aesop.runtime.producer.schema.eventprocessor.SchemaChangeEventProcessor;
 import com.google.code.or.binlog.impl.event.QueryEvent;
 import com.linkedin.databus2.schemas.SchemaRegistryService;
+import java.io.IOException;
 
 /**
  * The <code>NopSchemaChangeEventProcessor</code> is nop implementation of SchemaChangeEventProcessor.
@@ -56,6 +57,11 @@ public class NopSchemaChangeEventProcessor implements SchemaChangeEventProcessor
 	public void setTableUriToSrcNameMap(Map<String, String> tableUriToSrcNameMap)
 	{
 		return;
+	}
+
+	@Override
+	public void init() throws IOException {
+
 	}
 
 }

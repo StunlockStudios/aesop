@@ -97,6 +97,7 @@ public class OpenReplicationListener implements BinlogEventListener
 		catch (Exception e)
 		{
 			LOGGER.error("Exception occurred while processing event " + e);
+			e.printStackTrace();
 		}
 	}
 

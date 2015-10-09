@@ -11,65 +11,6 @@
 		<property name="location" value="classpath:project.properties" />
 	</bean>
 
-	<bean id="defaultEventConsumerFactory"
-		class="com.flipkart.aesop.eventconsumer.implementation.DefaultEventConsumerFactoryBean">
-		<property name="mapper" ref="defaultMapperImpl" />
-		<property name="destinationProcessorMap">
-			<map>
-				<entry key-ref="upsertDbusOpCode" value-ref="kafkaEventProcessor" />
-				<entry key-ref="deleteDbusOpCode" value-ref="kafkaEventProcessor" />
-			</map>
-		</property>
-		<property name="sourceEventFactory" ref="sourceEventFactory" />
-		<property name="destinationGroupSet">
-			<list>
-				<value>1</value>
-			</list>
-		</property>
-		<property name="totalDestinationGroups" value="1" />
-	</bean>
-
-	<bean id="defaultMapperImpl"
-		class="com.flipkart.aesop.mapper.implementation.DefaultMapperImpl">
-		<property name="configFilePath" value="../resources/application.conf" />
-		<property name="configRoot" value="MAPPER_CONFIG" />
-		<property name="mapperConfig" ref="mapperConfig" />
-		<property name="mapperTypeList">
-			<list>
-				<ref bean="noNamespaceEntityMapperType" />
-				<ref bean="noEntityMapperType" />
-				<ref bean="namespaceEntityMapperType" />
-			</list>
-		</property>
-		<property name="eventGroupFinder" ref="defaultEventGroupFinder" />
-		<property name="destinationEventFactory" ref="destinationEventFactory" />
-	</bean>
-
-	<util:constant id="upsertDbusOpCode"
-		static-field="com.linkedin.databus.core.DbusOpcode.UPSERT" />
-	<util:constant id="deleteDbusOpCode"
-		static-field="com.linkedin.databus.core.DbusOpcode.DELETE" />
-
-	<bean id="mapperConfig"
-		class="com.flipkart.aesop.mapper.config.implementation.MapperConfigImpl"
-		factory-method="getInstance" />
-
-	<util:constant id="noNamespaceEntityMapperType"
-		static-field="com.flipkart.aesop.mapper.implementation.MapperType.MAP_WITHOUT_SOURCE_NAMESPACE_ENTITY_CONFIG" />
-	<util:constant id="noEntityMapperType"
-		static-field="com.flipkart.aesop.mapper.implementation.MapperType.MAP_WITHOUT_SOURCE_ENTITY_CONFIG" />
-	<util:constant id="namespaceEntityMapperType"
-		static-field="com.flipkart.aesop.mapper.implementation.MapperType.MAP_WITH_SOURCE_ENTITY_CONFIG" />
-
-	<bean id="defaultEventGroupFinder"
-		class="com.flipkart.aesop.mapper.eventGroupFilter.implementation.DefaultEventGroupFinderImpl"
-		factory-method="getInstance" />
-
-	<bean id="destinationEventFactory"
-		class="com.flipkart.aesop.event.implementation.DestinationEventFactory" />
-
-	<bean id="sourceEventFactory"
-		class="com.flipkart.aesop.event.implementation.SourceEventFactory" />
 
     <bean id="kafkaEventProcessor"
           class="com.flipkart.aesop.processor.kafka.processor.impl.SyncKafkaEventProcessor">
@@ -96,6 +37,12 @@
         <constructor-arg value="../resources/config.infra.kafka.conf" />
     </bean>
 
+	<bean id="mysqlKafkaEventConsumerFactory"
+		class="com.flipkart.aesop.processor.kafka.clientconsumer.MysqlKafkaEventConsumerFactory">
+		<property name="schemaRegistryUrl" value="http://localhost:8081/"/>
+		<property name="kafkaClient" ref="kafkaClient"/>
+	</bean>
+
     <bean id="sampleClient"
           class="com.flipkart.aesop.runtime.clusterclient.DefaultClusterClientFactory">
         <property name="clientClusterConfig" ref="clientClusterConfig" />
@@ -103,19 +50,10 @@
             <list>
                 <bean class="com.flipkart.aesop.runtime.config.ClusterRegistration">
                     <property name="clusterName" value="fk_kafka_cluster" />
-                    <property name="consumerFactory">
-                        <bean class="com.flipkart.aesop.eventconsumer.ConsumerFactory">
-                            <property name="eventConsumerFactoryList">
-                                <list>
-                                    <ref bean="defaultEventConsumerFactory" />
-                                </list>
-                            </property>
-                            <property name="totalDestinationGroups" value="1" />
-                        </bean>
-                    </property>
+                    <property name="consumerFactory" ref="mysqlKafkaEventConsumerFactory"/>
                     <property name="logicalSources">
                         <list value-type="java.lang.String">
-                            <value>com.flipkart.aesop.events.ortest.Person</value>
+                            <value>mysql</value>
                         </list>
                     </property>
                 </bean>
@@ -148,7 +86,7 @@
                     <property name="relayPort" value="25021" />
                     <property name="relayLogicalSourceNames">
                         <list value-type="java.lang.String">
-                            <value>com.flipkart.aesop.events.ortest.Person</value>
+                            <value>mysql</value>
                         </list>
                     </property>
                 </bean>

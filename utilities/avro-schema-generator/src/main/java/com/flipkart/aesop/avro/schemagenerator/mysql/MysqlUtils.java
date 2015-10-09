@@ -110,6 +110,7 @@ public class MysqlUtils
 	 * @return the primary keys
 	 */
 	public static List<String> getPrimaryKeys(String dbName, String tableName)
+		throws SQLException
 	{
 		List<String> primaryKeyList = new ArrayList<String>();
 		Connection connection = null;
@@ -130,6 +131,7 @@ public class MysqlUtils
 		catch (SQLException e)
 		{
 			e.printStackTrace();
+			throw e;
 		}
 		finally
 		{
@@ -253,6 +255,7 @@ public class MysqlUtils
 	 * @return the field details
 	 */
 	public static List<TableRecord.Field> getFieldDetails(String db, String table)
+		throws SQLException
 	{
 		List<TableRecord.Field> fieldInfoList = new ArrayList<TableRecord.Field>();
 		Connection connection = null;
@@ -275,6 +278,7 @@ public class MysqlUtils
 		catch (SQLException e)
 		{
 			e.printStackTrace();
+			throw e;
 		}
 		finally
 		{

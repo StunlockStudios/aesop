@@ -4,6 +4,7 @@ import java.util.Map;
 
 import com.google.code.or.binlog.impl.event.QueryEvent;
 import com.linkedin.databus2.schemas.SchemaRegistryService;
+import java.io.IOException;
 
 /**
  * The <code>SchemaChangeEventProcessor</code> is a base interface for all schema change event processors
@@ -12,6 +13,8 @@ import com.linkedin.databus2.schemas.SchemaRegistryService;
 
 public interface SchemaChangeEventProcessor
 {
+
+	void init() throws IOException;
 	/** Handler method for schema change events */
 	void process(QueryEvent queryEvent) throws Exception;
 

@@ -29,6 +29,7 @@ import com.linkedin.databus2.relay.config.LogicalSourceConfig;
 import com.linkedin.databus2.relay.config.PhysicalSourceStaticConfig;
 import com.linkedin.databus2.schemas.FileSystemSchemaRegistryService;
 import com.linkedin.databus2.schemas.SourceIdNameRegistry;
+import com.stunlock.aesop.schemaregistry.ConfluentSchemaRegistryService;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.util.Assert;
@@ -81,12 +82,11 @@ public class DefaultRelayFactory  implements FactoryBean<DefaultRelay>, Initiali
         //Making this a list to initialise each producer seperately with initial SCN
         HttpRelay.StaticConfig[] staticConfigList = new HttpRelay.StaticConfig[this.producerRegistrationList.size()];
         DefaultRelay relay = null;
-
-        FileSystemSchemaRegistryService.Config configBuilder = new FileSystemSchemaRegistryService.Config();
-        configBuilder.setFallbackToResources(true);
-        configBuilder.setSchemaDir(this.getRelayConfig().getSchemaRegistryLocation());
-        FileSystemSchemaRegistryService.StaticConfig schemaRegistryServiceConfig = configBuilder.build();
-        FileSystemSchemaRegistryService schemaRegistryService = FileSystemSchemaRegistryService.build(schemaRegistryServiceConfig);
+	
+	ConfluentSchemaRegistryService.Config configBuilder = new ConfluentSchemaRegistryService.Config();
+	configBuilder.registryUrl = relayConfig.getSchemaRegistryURL();
+        ConfluentSchemaRegistryService.StaticConfig schemaRegistryServiceConfig = configBuilder.build();
+        ConfluentSchemaRegistryService schemaRegistryService = ConfluentSchemaRegistryService.build(schemaRegistryServiceConfig);
 
         if (this.maxScnReaderWriters == null) {
             this.maxScnReaderWriters = new HashMap<String,MultiServerSequenceNumberHandler>();
