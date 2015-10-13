@@ -91,6 +91,10 @@ public class MysqlTransactionManagerImpl<T extends GenericRecord> implements Mys
 	 */
 	private String currTableName = "";
 	/**
+	 * Current subject name of events being handled
+	 */
+	private String currSubjectName = "";
+	/**
 	 * Current active transaction
 	 */
 	private Transaction transaction = null;
@@ -235,6 +239,7 @@ public class MysqlTransactionManagerImpl<T extends GenericRecord> implements Mys
 	 */
 	private void startSource(String newTableName, long newTableId) {
 		currTableName = newTableName;
+		currSubjectName = "mysql." + newTableName;
 		currTableId = newTableId;
 		if (perSourceTransaction == null || transaction == null) {
 			perSourceTransaction = new PerSourceTransaction((int) newTableId);
@@ -300,14 +305,13 @@ public class MysqlTransactionManagerImpl<T extends GenericRecord> implements Mys
 		try {
 			setSource(tableId);
 			VersionedSchema schema = null;
-			schema = schemaRegistryService.fetchLatestVersionedSchemaBySourceName(currTableName);
+			schema = schemaRegistryService.fetchLatestVersionedSchemaBySourceName(currSubjectName);
 			if (schema == null) {
 				String[] parts = currTableName.split("\\.");
 
 				this.mySqlEventProducer.getSchemaChangeEventProcessor().process(parts[0], parts[1]);
-				schema = schemaRegistryService.fetchLatestVersionedSchemaBySourceName(currTableName);
+				schema = schemaRegistryService.fetchLatestVersionedSchemaBySourceName(currSubjectName);
 			}
-			LOGGER.debug("Schema obtained for table " + currTableName + " = " + schema);
 			if (schema != null) {
 				List<VersionedSchemaDbChangeEntry> entries
 					= eventManagerMap.get(Integer.valueOf(41)).frameAvroRecord(

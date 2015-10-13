@@ -81,10 +81,12 @@ public class MysqlKafkaEventConsumer implements DatabusCombinedConsumer {
 
 		public Schema _schema;
 		public String[] _primaryKeys;
+		public String _subject;
 
-		public SchemaInfo(Schema schema, String[] primaryKeys) {
+		public SchemaInfo(Schema schema, String[] primaryKeys, String subjectName) {
 			this._schema = schema;
 			this._primaryKeys = primaryKeys;
+			this._subject = subjectName;
 		}
 	}
 
@@ -106,7 +108,7 @@ public class MysqlKafkaEventConsumer implements DatabusCombinedConsumer {
 
 	private ConsumerCallbackResult processEvent(DbusEvent dbusEvent, DbusEventDecoder eventDecoder) {
 		ByteBuffer valueBuffer = dbusEvent.value();
-		int schemaId = valueBuffer.getInt(0);
+		int schemaId = valueBuffer.getInt(1);
 		valueBuffer.position(0);
 		SchemaInfo schema;
 		try {
@@ -139,7 +141,8 @@ public class MysqlKafkaEventConsumer implements DatabusCombinedConsumer {
 		String primaryKeyFieldName = SchemaHelper.getMetaField(schema, "pk");
 		String[] primaryKeys = primaryKeyFieldName.split(",");
 
-		info = new SchemaInfo(schema, primaryKeys);
+		String subjectName = SchemaHelper.getMetaField(schema, "subject");
+		info = new SchemaInfo(schema, primaryKeys, subjectName);
 		_schemaInfoMap.put(schemaId, info);
 		return info;
 	}
@@ -181,7 +184,7 @@ public class MysqlKafkaEventConsumer implements DatabusCombinedConsumer {
 		ArrayList<GenericRecord> records = new ArrayList<GenericRecord>();
 		for (int i =0; i < _batchBuffer.size(); i++) {
 			EventData evt = _batchBuffer.get(0);
-			_binDecoder = DecoderFactory.get().binaryDecoder(evt._payload, 4, evt._payload.length - 4, _binDecoder);
+			_binDecoder = DecoderFactory.get().binaryDecoder(evt._payload, 5, evt._payload.length - 5, _binDecoder);
 			_genericReader.setSchema(evt._schema._schema);
 			_genericReader.setExpected(evt._schema._schema);
 			try {
@@ -209,7 +212,7 @@ public class MysqlKafkaEventConsumer implements DatabusCombinedConsumer {
 		}
 		byte[] keyArray = keyStream.toByteArray();
 		for (EventData _batchBuffer1 : _batchBuffer) {
-			Future future = _kafkaClient.getClient().send(new ProducerRecord("mysql", keyArray, _batchBuffer1._payload));
+			Future future = _kafkaClient.getClient().send(new ProducerRecord(_batchBuffer1._schema._subject, keyArray, _batchBuffer1._payload));
 			_futureBuffer.add(new ScnFuture(future, scn));
 		}
 		_batchBuffer.clear();

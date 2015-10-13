@@ -19,6 +19,7 @@ import com.linkedin.databus2.schemas.FileSystemSchemaRegistryService;
 import com.linkedin.databus2.schemas.SchemaRegistryService;
 import com.linkedin.databus2.schemas.VersionedSchema;
 import com.linkedin.databus2.schemas.VersionedSchemaId;
+import com.linkedin.databus2.schemas.utils.SchemaHelper;
 import java.io.IOException;
 import org.apache.avro.Schema;
 
@@ -54,7 +55,7 @@ public class UpdateSchemaChangeEventProcessor implements SchemaChangeEventProces
 	 * Regex to parse alter table query
 	 */
 	private static final Pattern ALTER_TABLE_REGEX = Pattern.compile(
-		"(ALTER\\s+)(ONLINE\\s+|OFFLINE\\s+)?(IGNORE\\s+)?(TABLE\\s+)`(\\S+?)`.*", Pattern.CASE_INSENSITIVE);
+	    "(ALTER\\s+)(ONLINE\\s+|OFFLINE\\s+)?(IGNORE\\s+)?(TABLE\\s+)`(\\S+?)`.*", Pattern.CASE_INSENSITIVE);
 
 	@Override
 	public void init() throws IOException {
@@ -64,8 +65,10 @@ public class UpdateSchemaChangeEventProcessor implements SchemaChangeEventProces
 		Schema.Parser parser = new Schema.Parser();
 		for (Map.Entry<String, String> entry : schemas.entrySet()) {
 			LOGGER.info("Generated " + entry.getKey() + " with schema " + entry.getValue());
+
 			Schema avroSchema = parser.parse(entry.getValue());
-			VersionedSchema schema = new VersionedSchema(dbName + "." + entry.getKey(), (short) 0, avroSchema, entry.getValue());
+			String subject = SchemaHelper.getMetaField(avroSchema, "subject");
+			VersionedSchema schema = new VersionedSchema(subject, (short) 0, avroSchema, entry.getValue());
 			try {
 				schemaRegistryService.registerSchema(schema);
 			} catch (DatabusException dbe) {
@@ -88,9 +91,9 @@ public class UpdateSchemaChangeEventProcessor implements SchemaChangeEventProces
 		}
 		String tableName = matcher.group(5);
 		String databaseName = queryEvent.getDatabaseName().toString();
-		String tableUri = databaseName.toLowerCase() + "." + tableName.toLowerCase();
+		String tableUri = "mysql." + databaseName.toLowerCase() + "." + tableName.toLowerCase();
 		VersionedSchema olderSchema
-			= schemaRegistryService.fetchLatestVersionedSchemaBySourceName(tableUri);
+		    = schemaRegistryService.fetchLatestVersionedSchemaBySourceName(tableUri);
 		if (olderSchema != null) {
 			this.process(databaseName, tableName);
 		} else {
@@ -116,15 +119,17 @@ public class UpdateSchemaChangeEventProcessor implements SchemaChangeEventProces
 				break;
 			} catch (IOException ioex) {
 				LOGGER.error("Failed to generate schema for " + databaseName + "." + tableName
-					+ ": " + ioex);
+				    + ": " + ioex);
 				ioex.printStackTrace();
 			}
 			Thread.sleep(100 + Integer.max(tries, 30) * 100);
 			tries++;
 		}
-		String tableUri = databaseName.toLowerCase() + "." + tableName.toLowerCase();
+		Schema parsedSchema = new Schema.Parser().parse(newSchemaJson);
+		String subject = SchemaHelper.getMetaField(parsedSchema, "subject");
+
 		VersionedSchema olderSchema
-			= schemaRegistryService.fetchLatestVersionedSchemaBySourceName(tableUri);
+		    = schemaRegistryService.fetchLatestVersionedSchemaBySourceName(subject);
 
 		short olderVersion = (olderSchema != null) ? (short) olderSchema.getVersion() : 0;
 		/**
@@ -132,8 +137,8 @@ public class UpdateSchemaChangeEventProcessor implements SchemaChangeEventProces
 		 */
 		Short newVersion = olderVersion == Short.MAX_VALUE ? olderVersion : (short) (olderVersion + 1);
 		VersionedSchema newSchema
-			= new VersionedSchema(new VersionedSchemaId(tableUri, newVersion),
-				Schema.parse(newSchemaJson), null);
+		    = new VersionedSchema(new VersionedSchemaId(subject, newVersion),
+			parsedSchema, null);
 		schemaRegistryService.registerSchema(newSchema);
 	}
 

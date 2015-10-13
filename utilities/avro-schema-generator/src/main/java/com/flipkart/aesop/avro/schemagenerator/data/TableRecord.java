@@ -32,7 +32,7 @@ public class TableRecord
 		this.type = type;
 		this.doc = doc;
 		this.namespace = namespace;
-		this.meta = "pk=" + StringUtils.join(primaryKeys, ",");
+		this.meta = "pk=" + StringUtils.join(primaryKeys, ",") + ";subject=mysql." + namespace + "." + name;
 		this.fields = fields;
 	}
 

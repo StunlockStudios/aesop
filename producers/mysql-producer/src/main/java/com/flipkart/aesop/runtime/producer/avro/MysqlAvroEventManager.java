@@ -207,6 +207,7 @@ public class MysqlAvroEventManager<T extends GenericRecord> {
 		ByteArrayOutputStream bos = null;
 		try {
 			bos = new ByteArrayOutputStream();
+			bos.write(0xFF);
 			bos.write(intToByteArray(versionedSchema.getGlobalId()));
 			Encoder encoder = EncoderFactory.get().directBinaryEncoder(bos, null);
 			GenericDatumWriter<GenericRecord> writer = new GenericDatumWriter<GenericRecord>(record.getSchema());
